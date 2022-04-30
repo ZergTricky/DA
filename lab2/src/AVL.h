@@ -1,19 +1,16 @@
-//
-// Created by egorb on 23.04.2022.
-//
-
 #ifndef LAB2_AVL_H
 #define LAB2_AVL_H
 
 #include "string"
-#include <fstream>
+#include "fstream"
+#include "stack"
 
 template<typename TKey, typename TValue>
 class TAVLTree {
 private:
     class TAVLNode {
     public:
-        short balance = 0;
+        int balance = 0;
 
         TKey key;
         TValue value;
@@ -23,15 +20,10 @@ private:
 
         TAVLNode(const TKey &key, const TValue &val) : key(key), value(val) {}
 
-        TAVLNode(TKey &&key, TKey &&val) : key(std::move(key)), value(std::move(value)) {}
+        TAVLNode(const TKey &key, const TValue &value, const int &balance) : key(key), value(value), balance(balance) {}
 
-        static void swap(TAVLNode &lhs, TAVLNode &rhs) noexcept {
-            std::swap(lhs.right, rhs.right);
-            std::swap(lhs.left, rhs.left);
-            std::swap(lhs.value, rhs.value);
-            std::swap(lhs.key, rhs.key);
-            std::swap(lhs.balance, rhs.balance);
-        }
+        TAVLNode(TKey &&key, TValue &&val) : key(std::move(key)), value(std::move(val)) {}
+
     };
 
 
@@ -67,7 +59,7 @@ private:
         node->right = right->left;
         right->left = node;
 
-        TAVLNode::swap(*node, *right);
+        std::swap(*node, *right);
 
         node->left = right;
     }
@@ -78,7 +70,7 @@ private:
         node->left = left->right;
         left->right = node;
 
-        TAVLNode::swap(*node, *left);
+        std::swap(*node, *left);
 
         node->right = left;
     }
@@ -267,6 +259,7 @@ public:
 
     void Destroy(TAVLNode *node) {
         if (node == nullptr)return;
+        treeRoot = nullptr;
         Destroy(node->left);
         node->left = nullptr;
         Destroy(node->right);
@@ -302,29 +295,45 @@ public:
         return true;
     }
 
-    static TAVLNode *LoadTree(std::ifstream &readFile) {
+    static void LoadTree(TAVLTree &tree, std::ifstream &readFile) {
+        tree.Destroy(tree.treeRoot);
         TKey key;
         TValue value;
         int balance;
 
-        readFile >> key >> value >> balance;
+        std::stack<std::pair<TAVLNode *, int>> Stack;
 
-        if (key == "0") {
-            return nullptr;
+        while (readFile >> key >> value >> balance) {
+            if (key == "0") {
+                if (!Stack.empty())Stack.top().second--;
+            } else {
+                if (Stack.empty()) {
+                    tree.treeRoot = new TAVLNode(key, value, balance);
+                    Stack.push({tree.treeRoot, 2});
+                } else {
+                    TAVLNode *node = Stack.top().first;
+
+                    TAVLNode *newNode = new TAVLNode(key, value, balance);
+
+                    if (Stack.top().second == 2) {
+                        node->left = newNode;
+                    } else node->right = newNode;
+
+                    Stack.push({newNode, 2});
+                }
+            }
+            while (!Stack.empty() && Stack.top().second == 0) {
+                Stack.pop();
+                if (!Stack.empty()) {
+                    Stack.top().second--;
+                }
+            }
         }
-
-        TAVLNode *node = new TAVLNode(std::move(key), std::move(value));
-        node->balance = balance;
-
-        node->left = LoadTree(readFile);
-        node->right = LoadTree(readFile);
-
-        return node;
     }
 
     static void SaveTree(TAVLNode *node, std::ofstream &writeFile) {
         if (node == nullptr) {
-            writeFile << "0" << " " << "0" << " " << "0" << "\n";
+            writeFile << "0 0 0\n";
             return;
         }
 

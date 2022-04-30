@@ -1,12 +1,10 @@
 #include <iostream>
-#include <fstream>
 #include "string"
-#include "./src/AVL.h"
+#include "AVL.h"
 
 
 int main() {
     std::ios::sync_with_stdio(false);
-    std::cin.tie(nullptr);
 
     TAVLTree<std::string, unsigned long long> tree;
 
@@ -23,9 +21,9 @@ int main() {
             bool success = tree.Insert(key, value);
 
             if (success) {
-                std::cout << "OK" << std::endl;
+                std::cout << "OK\n";
             } else {
-                std::cout << "Exist" << std::endl;
+                std::cout << "Exist\n";
             }
         } else if (c == "-") {
             std::string key;
@@ -35,29 +33,30 @@ int main() {
             }
             bool success = tree.Erase(key);
             if (success) {
-                std::cout << "OK" << std::endl;
+                std::cout << "OK\n";
             } else {
-                std::cout << "NoSuchWord" << std::endl;
+                std::cout << "NoSuchWord\n";
             }
         } else if (c == "!") {
             std::string operation, path;
             std::cin >> operation >> path;
             if (operation == "Save") {
-                std::ofstream writeFile(path);
+                std::ofstream writeFile;
+                writeFile.open(path);
 
                 TAVLTree<std::string, unsigned long long>::SaveTree(tree.treeRoot, writeFile);
+
+                writeFile.close();
             } else {
-                std::ifstream readFile(path);
+                std::ifstream readFile;
+                readFile.open(path);
 
-                tree.Destroy(tree.treeRoot);
+                TAVLTree<std::string, unsigned long long>::LoadTree(tree, readFile);
 
-                auto node = TAVLTree<std::string, unsigned long long>::LoadTree(readFile);
-
-
-                tree.treeRoot = node;
+                readFile.close();
             }
 
-            std::cout << "OK" << std::endl;
+            std::cout << "OK\n";
         } else {
             for (char &item : c) {
                 item = tolower(item);
@@ -65,9 +64,9 @@ int main() {
             auto node = tree.Find(c);
 
             if (node != nullptr) {
-                std::cout << "OK: " << node->value << std::endl;
+                std::cout << "OK: " << node->value << "\n";
             } else {
-                std::cout << "NoSuchWord" << std::endl;
+                std::cout << "NoSuchWord" << "\n";
             }
         }
     }
