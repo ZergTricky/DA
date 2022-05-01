@@ -9,8 +9,8 @@ run: out out/main.o
 gen: src/gen.cpp
 	$(CXX) $^ $(CXXFLAGS) -o gen
 
-stupid: src/stupid.cpp
-	$(CXX) $^ $(CXXFLAGS) -o stupid
+slow: src/slow.cpp
+	$(CXX) $^ $(CXXFLAGS) -o slow
 
 
 out/main.o: src/main.cpp src/AVL.h

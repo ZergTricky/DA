@@ -8,6 +8,112 @@
 template<typename TKey, typename TValue>
 class TAVLTree {
 private:
+    class TAVLNode;
+
+public:
+
+    TAVLTree() : treeRoot(nullptr) {}
+
+    TAVLTree(TAVLNode *root) : treeRoot(root) {}
+
+    TAVLNode *GetRoot() const noexcept {
+        return treeRoot;
+    }
+
+    void Destroy(TAVLNode *node) {
+        if (node == nullptr)return;
+        treeRoot = nullptr;
+        Destroy(node->left);
+        node->left = nullptr;
+        Destroy(node->right);
+        node->right = nullptr;
+        delete node;
+    }
+
+    TAVLNode *Find(const TKey &key) {
+        return Search(treeRoot, key);
+    }
+
+    bool Insert(const TKey &key, const TValue &value) {
+        TAVLNode *node = Search(treeRoot, key);
+
+        if (node != nullptr) {
+            return false;
+        }
+
+        Insert(treeRoot, nullptr, key, value);
+
+        return true;
+    }
+
+    bool Erase(const TKey &key) {
+        TAVLNode *node = Search(treeRoot, key);
+
+        if (node == nullptr) {
+            return false;
+        }
+
+        Erase(node, key);
+
+        return true;
+    }
+
+    static void LoadTree(TAVLTree &tree, std::ifstream &readFile) {
+        tree.Destroy(tree.treeRoot);
+        TKey key;
+        TValue value;
+        int balance;
+
+        std::stack<std::pair<TAVLNode *, int>> Stack;
+
+        while (readFile >> key >> value >> balance) {
+            if (key == "0") {
+                if (!Stack.empty())Stack.top().second--;
+            } else {
+                if (Stack.empty()) {
+                    tree.treeRoot = new TAVLNode(key, value, balance);
+                    Stack.push({tree.treeRoot, 2});
+                } else {
+                    TAVLNode *node = Stack.top().first;
+
+                    TAVLNode *newNode = new TAVLNode(key, value, balance);
+
+                    if (Stack.top().second == 2) {
+                        node->left = newNode;
+                    } else node->right = newNode;
+
+                    Stack.push({newNode, 2});
+                }
+            }
+            while (!Stack.empty() && Stack.top().second == 0) {
+                Stack.pop();
+                if (!Stack.empty()) {
+                    Stack.top().second--;
+                }
+            }
+        }
+    }
+
+    static void SaveTree(TAVLNode *node, std::ofstream &writeFile) {
+        if (node == nullptr) {
+            writeFile << "0 0 0\n";
+            return;
+        }
+
+        writeFile << node->key << " " << node->value << " " << node->balance << "\n";
+
+        SaveTree(node->left, writeFile);
+        SaveTree(node->right, writeFile);
+    }
+
+    ~TAVLTree() {
+        Destroy(treeRoot);
+    }
+
+private:
+
+    TAVLNode *treeRoot = nullptr;
+
     class TAVLNode {
     public:
         int balance = 0;
@@ -25,7 +131,6 @@ private:
         TAVLNode(TKey &&key, TValue &&val) : key(std::move(key)), value(std::move(val)) {}
 
     };
-
 
     TAVLNode *Search(TAVLNode *node, const TKey &key) {
         if (node == nullptr) {
@@ -251,101 +356,6 @@ private:
         }
     }
 
-public:
-
-    TAVLNode *treeRoot = nullptr;
-
-    TAVLTree() : treeRoot(nullptr) {}
-
-    void Destroy(TAVLNode *node) {
-        if (node == nullptr)return;
-        treeRoot = nullptr;
-        Destroy(node->left);
-        node->left = nullptr;
-        Destroy(node->right);
-        node->right = nullptr;
-        delete node;
-    }
-
-    TAVLNode *Find(const TKey &key) {
-        return Search(treeRoot, key);
-    }
-
-    bool Insert(const TKey &key, const TValue &value) {
-        TAVLNode *node = Search(treeRoot, key);
-
-        if (node != nullptr) {
-            return false;
-        }
-
-        Insert(treeRoot, nullptr, key, value);
-
-        return true;
-    }
-
-    bool Erase(const TKey &key) {
-        TAVLNode *node = Search(treeRoot, key);
-
-        if (node == nullptr) {
-            return false;
-        }
-
-        Erase(node, key);
-
-        return true;
-    }
-
-    static void LoadTree(TAVLTree &tree, std::ifstream &readFile) {
-        tree.Destroy(tree.treeRoot);
-        TKey key;
-        TValue value;
-        int balance;
-
-        std::stack<std::pair<TAVLNode *, int>> Stack;
-
-        while (readFile >> key >> value >> balance) {
-            if (key == "0") {
-                if (!Stack.empty())Stack.top().second--;
-            } else {
-                if (Stack.empty()) {
-                    tree.treeRoot = new TAVLNode(key, value, balance);
-                    Stack.push({tree.treeRoot, 2});
-                } else {
-                    TAVLNode *node = Stack.top().first;
-
-                    TAVLNode *newNode = new TAVLNode(key, value, balance);
-
-                    if (Stack.top().second == 2) {
-                        node->left = newNode;
-                    } else node->right = newNode;
-
-                    Stack.push({newNode, 2});
-                }
-            }
-            while (!Stack.empty() && Stack.top().second == 0) {
-                Stack.pop();
-                if (!Stack.empty()) {
-                    Stack.top().second--;
-                }
-            }
-        }
-    }
-
-    static void SaveTree(TAVLNode *node, std::ofstream &writeFile) {
-        if (node == nullptr) {
-            writeFile << "0 0 0\n";
-            return;
-        }
-
-        writeFile << node->key << " " << node->value << " " << node->balance << "\n";
-
-        SaveTree(node->left, writeFile);
-        SaveTree(node->right, writeFile);
-    }
-
-    ~TAVLTree() {
-        Destroy(treeRoot);
-    }
 };
 
 #endif //LAB2_AVL_H

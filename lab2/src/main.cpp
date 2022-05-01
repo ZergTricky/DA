@@ -44,7 +44,7 @@ int main() {
                 std::ofstream writeFile;
                 writeFile.open(path);
 
-                TAVLTree<std::string, unsigned long long>::SaveTree(tree.treeRoot, writeFile);
+                TAVLTree<std::string, unsigned long long>::SaveTree(tree.GetRoot(), writeFile);
 
                 writeFile.close();
             } else {
